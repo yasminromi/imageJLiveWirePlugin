@@ -1,15 +1,15 @@
+package edu.deakin.timo.liveWireEngine;
+import java.util.PriorityQueue;
+
 /*
 	Modified by Timo Rantalainen 2012 - 2014 tjrantal at gmail dot com from IvusSnakes (http://ivussnakes.sourceforge.net/) ImageJ plugin 
 	A Class to calculate LiveWire paths.
 	
 	Changed the implementation back to the one suggested in Barret & Mortensen 1997.
-	Interactive live-wire boundary extraction. Medical Image Analysis (1996/7) volume 1, number 4, pp 331–341.
+	Interactive live-wire boundary extraction. Medical Image Analysis (1996/7) volume 1, number 4, pp 331-341.
+	
+	 The code is licensed under GPL 3.0 or newer
 */
-
-package edu.deakin.timo.liveWireEngine;
-
-import java.util.PriorityQueue;
-
 
 public class LiveWireCosts implements Runnable{
 	double[][] imagePixels; //stores Pixels from original image
@@ -135,7 +135,7 @@ public class LiveWireCosts implements Runnable{
 		return maximum;
 	}
 
-    //initializes laplacian image
+    /*initializes laplacian image*/
     private void initLaplacian(){
 		laplacian = new double[rows][columns];
 		
@@ -188,7 +188,12 @@ public class LiveWireCosts implements Runnable{
 		}
     }
 	
-	/*Check neigbours for Laplacian zero-crossing*/
+	/*Check neigbours for Laplacian zero-crossing
+		@param tempLap mask of zero-crossings
+		@param neigbourhood the neighbourhood to check
+		@param centre the coordinates of the centre pixel to check the neighbourhood for
+		@return tempLap the zero-crossings mask
+	*/
 	protected double[][] checkNeighbours(double[][] tempLap, int[][] neighbourhood,int[] centre){
 		int[] coordinates;
         for (int r = 0;r<neighbourhood.length;++r){

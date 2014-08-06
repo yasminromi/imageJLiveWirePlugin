@@ -1,10 +1,13 @@
-//this class was created to store pixel nodes in a Priority Queue
-//so that Dijkstra can run on O(n log n)
-//The interface Comparable is required so that the Java class PriorityQueue
-//could be used
-//
+
 package edu.deakin.timo.liveWireEngine;
 
+/*
+	Store pixel nodes in a Priority Queue
+	so that Dijkstra can run on O(n log n)
+	The interface Comparable is required so that the Java class PriorityQueue
+	could be used
+	 The code is licensed under GPL 3.0 or newer
+*/
 class PixelNode implements Comparable<PixelNode> {
     private int[] myIndex;
     private double myDistance;
@@ -25,13 +28,14 @@ class PixelNode implements Comparable<PixelNode> {
     }
 
     public int compareTo(PixelNode other){
-	if( myDistance < other.getDistance()) 
+	if( myDistance < other.getDistance()){
 	    return -1;
-	else if( myDistance > other.getDistance()) 
-	    return +1;
-	else 
-	    return 0;
-	//	return (int)((myDistance - other.getDistance()));//plus 0.5 to round
+	}else{
+		if( myDistance > other.getDistance()){
+		    return +1;
+		}else{
+		    return 0;
+	    }
     }
 
 }

@@ -1,5 +1,4 @@
 /*
- Image/J Plugins
  Copyright (C) 2012 - 2014 Timo Rantalainen
  Author's email: tjrantal at gmail dot com
  The code is licensed under GPL 3.0 or newer
@@ -20,7 +19,7 @@ import java.awt.event.*;		/**MouseListener*/
 import edu.deakin.timo.liveWireEngine.*;	/**Live wire implementation*/
 
 /*
-	LiveWire ImageJ plug-in modified from ivus snakes (http://ivussnakes.sourceforge.net/) ImageJ plugin 
+ 	LiveWire ImageJ plug-in modified from ivus snakes (http://ivussnakes.sourceforge.net/) ImageJ plugin 
 	Changed the implementation back to the one suggested in Barret & Mortensen 1997.
 	Interactive live-wire boundary extraction. Medical Image Analysis (1996/7) volume 1, number 4, pp 331-341.
  */
@@ -75,7 +74,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 
     }
 	
-	
+	/**Used to reset the polygon, and polygon list used to keep current polygon, and the history of the current polygon*/
 	protected void init(){
 		/*Init polygon stack for history*/
 		polygons = new ArrayList<Polygon>();
@@ -96,10 +95,8 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		if (e.getClickCount() > 1){
 			//Do not remove the last point, simply connect last point, and initial point
 			polygon.addPoint(polygon.xpoints[0],polygon.ypoints[0]);
-			
 			/*Create the ROI*/
 			roi = new PolygonRoi(polygon,Roi.POLYGON);
-			
 			/*Set roi color to differentiate ROIs from each other*/
 			int colorInd = over.size();
 			float[] colors = new float[]{
@@ -108,20 +105,13 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 											0.5f+0.5f*((float) Math.sin(2d*Math.PI*((double)colorInd)/10.0))	/*B*/
 										
 										};
-			IJ.log("R "+colors[0]+" G "+colors[1]+" B "+colors[2]);
 			roi.setStrokeColor(new Color(colors[0],colors[1],colors[2]));
-			
 			/*Add the roi to an overlay, and set the overlay active*/
 			imp.setRoi(roi,true);
-			IJ.log("Add overlay");
 			over.add(roi);
-			
 			/**Add the segmented area to the roiManager*/
-			IJ.log("Add to roiManager");
 			rMan.addRoi(roi);
-			
 			/**Reset polygons*/
-			IJ.log("Reset");
 			init();
 		}
 	}
@@ -144,7 +134,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 						pY[i] = tempP.ypoints[i];
 					}
 					polygon = new Polygon(pX,pY,pX.length);
-					polygons.remove(polygons.size()-1);	//Remove the previous polygon
+					polygons.remove(polygons.size()-1);	/*Remove the previous polygon*/
 					roi = new PolygonRoi(polygon,Roi.POLYLINE);
 					imp.setRoi(roi,true);
 					lwc.setSeed(pX[pX.length-1],pY[pX.length-1]);
@@ -244,7 +234,6 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 			((ImageCanvas) e.getSource()).removeMouseListener(this);
 			((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
 			((ImageCanvas) e.getSource()).removeKeyListener(this);
-			IJ.log("All done");
 		}
 	}
 	/**Invoked when a key has been released.*/
