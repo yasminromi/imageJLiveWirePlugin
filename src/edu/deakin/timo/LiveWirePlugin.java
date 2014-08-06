@@ -49,30 +49,6 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		width = imp.getWidth();
 		height = imp.getHeight();
 
-		init();		
-		/**Pop up Roi Manager*/
-		rMan = new RoiManager();
-
-		/*Register listener*/
-		ImageWindow win = imp.getWindow();
-		canvas = win.getCanvas();
-		canvas.addMouseListener(this);
-		canvas.addMouseMotionListener(this);
-		canvas.addKeyListener(this);
-
-		
-		
-		
-		
-		
-		
-
-    }
-	
-	
-	protected void init(){
-		/*Init polygon stack for history*/
-		polygons = new ArrayList<Polygon>();
 		/*Init livewire*/
 		double[][] pixels = new double[width][height];
 		short[] tempPointer = (short[]) imp.getProcessor().getPixels();	
@@ -82,6 +58,27 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 			}
 		}
 		lwc = new LiveWireCosts(pixels);
+
+		init();		
+		/**Pop up Roi Manager*/
+		if (RoiManager.getInstance() == null){
+			rMan = new RoiManager();
+		}else{
+			rMan = RoiManager.getInstance();
+		}
+		/*Register listener*/
+		ImageWindow win = imp.getWindow();
+		canvas = win.getCanvas();
+		canvas.addMouseListener(this);
+		canvas.addMouseMotionListener(this);
+		canvas.addKeyListener(this);
+
+    }
+	
+	
+	protected void init(){
+		/*Init polygon stack for history*/
+		polygons = new ArrayList<Polygon>();
 		polygon = new Polygon();
 		
 		/**Add overlay*/
@@ -96,51 +93,47 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	
 	/*Implement the MouseListener, and MouseMotionListener interfaces*/
 	public void mousePressed(MouseEvent e) {
-		/*If alt is pressed when a button is clicked, disconnect listeners, i.e. stop the plugin*/
 		if (e.getClickCount() > 1){
 			//Do not remove the last point, simply connect last point, and initial point
-			//IJ.log("Add point "+polygon.npoints);
 			polygon.addPoint(polygon.xpoints[0],polygon.ypoints[0]);
 			
-			//IJ.log("Appended, length after "+polygon.npoints);
+			/*Create the ROI*/
 			roi = new PolygonRoi(polygon,Roi.POLYGON);
 			
+			/*Set roi color to differentiate ROIs from each other*/
+			int colorInd = over.size();
+			float[] colors = new float[]{
+											0.5f+0.5f*((float) Math.sin(2d*Math.PI*((double)(colorInd-5))/10.0)),	/*R*/
+											0.5f+0.5f*((float) Math.cos(2d*Math.PI*((double)colorInd)/10.0)), 	/*G*/
+											0.5f+0.5f*((float) Math.sin(2d*Math.PI*((double)colorInd)/10.0))	/*B*/
+										
+										};
+			IJ.log("R "+colors[0]+" G "+colors[1]+" B "+colors[2]);
+			roi.setStrokeColor(new Color(colors[0],colors[1],colors[2]));
 			
 			/*Add the roi to an overlay, and set the overlay active*/
-			//IJ.log("Add ROI");
 			imp.setRoi(roi,true);
-			//IJ.log("Add overlay");
+			IJ.log("Add overlay");
 			over.add(roi);
-			//imp.setOverlay(over);
 			
 			/**Add the segmented area to the roiManager*/
-			//IJ.log("Add rMan");
+			IJ.log("Add to roiManager");
 			rMan.addRoi(roi);
 			
 			/**Reset polygons*/
-			//IJ.log("REset");
+			IJ.log("Reset");
 			init();
-			//IJ.log("All done");
-			/**Remove listeners*/
-			//IJ.log("Start removing listeners");
-			//((ImageCanvas) e.getSource()).removeMouseListener(this);
-			//((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
-			//IJ.log("All done");
 		}
-		
-		
-		//IJ.log("Right button: "+((e.getModifiers()&Event.META_MASK)!=0));
 	}
 
 	public void mouseReleased(MouseEvent e) {
-		
 		/**Ignore second and further clicks of a double click*/
 		if (e.getClickCount() < 2){
 			int screenX = e.getX();
 			int screenY = e.getY();
 			int x = canvas.offScreenX(screenX);
 			int y = canvas.offScreenY(screenY);
-			/*Backpedal polygon to the previous one*/
+			/*Backpedal polygon to the previous one if control is pressed*/
 			if(polygons.size()>0 && ((e.getModifiersEx() & InputEvent.CTRL_MASK) != 0||  (e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0)){
 					//Get the previous polygon
 					Polygon tempP = polygons.get(polygons.size()-1);
@@ -156,22 +149,22 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 					imp.setRoi(roi,true);
 					lwc.setSeed(pX[pX.length-1],pY[pX.length-1]);
 			}else{
-				//Draw the latest Polygon
+				/*Add a new segment to the polygon*/
 				if (polygon.npoints > 0){
-					//Store a copy of the previous polygon
+					/*Store a copy of the previous polygon*/
 					int[] tX = new int[polygon.npoints];
 					int[] tY = new int[polygon.npoints];
 					for (int i = 0;i< polygon.npoints;++i){
 						tX[i] = polygon.xpoints[i];
 						tY[i] = polygon.ypoints[i];
 					}
-					polygons.add(new Polygon(tX,tY,tX.length));	//Store the previous polygon
-					//Update the polygon
+					polygons.add(new Polygon(tX,tY,tX.length));	/*Store the previous polygon*/
+					/*If shift is pressed, add a straight line*/
 					if ((e.getModifiersEx() & InputEvent.SHIFT_MASK) != 0||  (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0){
-						//Get a straight line
+						/*Add a straight line*/
 						polygon.addPoint(x,y);
 					}else{
-						//Get polygon from livewire
+						/*Add a livewire segment*/
 						int[][] fromSeedToCursor = lwc.returnPath(x,y);
 						int[] pX = new int[polygon.npoints+fromSeedToCursor.length];
 						int[] pY = new int[polygon.npoints+fromSeedToCursor.length];
@@ -185,10 +178,9 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 						}
 						polygon = new Polygon(pX, pY, pX.length);
 					}
-					//Get, and set the ROI
+					/*Get, and set the ROI*/
 					roi = new PolygonRoi(polygon,Roi.POLYLINE);
 					imp.setRoi(roi,true);
-				
 				}else{
 					polygon.addPoint(x,y);
 					lwc.setSeed(x,y);
@@ -199,13 +191,13 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		}
 	}
 	
-	public void mouseDragged(MouseEvent e) {
-	}
-
-
+	/**Implement the MouseListener*/
+	public void mouseDragged(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
 	public void mouseClicked(MouseEvent e) {}	
 	public void mouseEntered(MouseEvent e) {}
+	
+	/**Visualize the segment to be added in real-time*/
 	public void mouseMoved(MouseEvent e) {
 		if (polygon.npoints > 0){
 			int screenX = e.getX();
@@ -214,6 +206,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 			int y = canvas.offScreenY(screenY);
 			int[] pX;
 			int[] pY;
+			/**If shift is pressed, visualize adding a straight line*/
 			if ((e.getModifiersEx() & InputEvent.SHIFT_MASK) != 0||  (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0){
 				pX = new int[polygon.npoints+1];
 				pY = new int[polygon.npoints+1];
@@ -224,9 +217,8 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 				pX[polygon.npoints] = x;
 				pY[polygon.npoints] = y;				
 			} else {
-				//Use livewire
+				/*Visualize adding livewire segment*/
 				int[][] fromSeedToCursor = lwc.returnPath(x,y);
-				//IJ.log("Return path length "+fromSeedToCursor.length);
 				pX = new int[polygon.npoints+fromSeedToCursor.length];
 				pY = new int[polygon.npoints+fromSeedToCursor.length];
 				for (int i = 0;i< polygon.npoints;++i){
@@ -238,6 +230,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 					pY[polygon.npoints+i] = fromSeedToCursor[i][1];
 				}
 			}
+			/**Add the ROI*/
 			imp.setRoi(new PolygonRoi(pX, pY, pX.length, Roi.POLYLINE),true);			
 		}
 	}
@@ -248,11 +241,10 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		/**Shut down the plug-in*/
 		if (e.getExtendedKeyCode() == KeyEvent.getExtendedKeyCodeForChar(KeyEvent.VK_Q) || e.getKeyChar() == 'q'){
 			/**Remove listeners*/
-			//IJ.log("Start removing listeners");
 			((ImageCanvas) e.getSource()).removeMouseListener(this);
 			((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
 			((ImageCanvas) e.getSource()).removeKeyListener(this);
-			//IJ.log("All done");
+			IJ.log("All done");
 		}
 	}
 	/**Invoked when a key has been released.*/
