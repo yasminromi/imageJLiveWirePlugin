@@ -200,7 +200,7 @@ public class LiveWireCosts implements Runnable{
 			coordinates = neighbourhood[r];
             if (Math.signum(laplacian[coordinates[0]][coordinates[1]]) != Math.signum(laplacian[centre[0]][centre[1]])){ /*Signs differ, mark border*/
 				if (Math.abs(laplacian[centre[0]][centre[1]]) < Math.abs(laplacian[coordinates[0]][coordinates[1]])){
-					tempLap[centre[0]][centre[1]] = 0;
+					tempLap[centre[0]][centre[1]] = 1;	/*zero-crossing detected*/
 			    }else{
 					tempLap[coordinates[0]][coordinates[1]] = 0;
 				}
