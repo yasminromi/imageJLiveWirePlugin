@@ -133,65 +133,69 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	}
 
 	public void mouseReleased(MouseEvent e) {
-		int screenX = e.getX();
-		int screenY = e.getY();
-		int x = canvas.offScreenX(screenX);
-		int y = canvas.offScreenY(screenY);
-		/*Backpedal polygon to the previous one*/
-		if(polygons.size()>0 && ((e.getModifiersEx() & InputEvent.CTRL_MASK) != 0||  (e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0)){
-				//Get the previous polygon
-				Polygon tempP = polygons.get(polygons.size()-1);
-				int[] pX = new int[tempP.npoints];
-				int[] pY = new int[tempP.npoints];
-				for (int i = 0;i< tempP.npoints;++i){
-					pX[i] = tempP.xpoints[i];
-					pY[i] = tempP.ypoints[i];
-				}
-				polygon = new Polygon(pX,pY,pX.length);
-				polygons.remove(polygons.size()-1);	//Remove the previous polygon
-				roi = new PolygonRoi(polygon,Roi.POLYLINE);
-				imp.setRoi(roi,true);
-				lwc.setSeed(pX[pX.length-1],pY[pX.length-1]);
-		}else{
-			//Draw the latest Polygon
-			if (polygon.npoints > 0){
-				//Store a copy of the previous polygon
-				int[] tX = new int[polygon.npoints];
-				int[] tY = new int[polygon.npoints];
-				for (int i = 0;i< polygon.npoints;++i){
-					tX[i] = polygon.xpoints[i];
-					tY[i] = polygon.ypoints[i];
-				}
-				polygons.add(new Polygon(tX,tY,tX.length));	//Store the previous polygon
-				//Update the polygon
-				if ((e.getModifiersEx() & InputEvent.SHIFT_MASK) != 0||  (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0){
-					//Get a straight line
-					polygon.addPoint(x,y);
-				}else{
-					//Get polygon from livewire
-					int[][] fromSeedToCursor = lwc.returnPath(x,y);
-					int[] pX = new int[polygon.npoints+fromSeedToCursor.length];
-					int[] pY = new int[polygon.npoints+fromSeedToCursor.length];
-					for (int i = 0;i< polygon.npoints;++i){
-						pX[i] = polygon.xpoints[i];
-						pY[i] = polygon.ypoints[i];
+		
+		/**Ignore second and further clicks of a double click*/
+		if (e.getClickCount() < 2){
+			int screenX = e.getX();
+			int screenY = e.getY();
+			int x = canvas.offScreenX(screenX);
+			int y = canvas.offScreenY(screenY);
+			/*Backpedal polygon to the previous one*/
+			if(polygons.size()>0 && ((e.getModifiersEx() & InputEvent.CTRL_MASK) != 0||  (e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0)){
+					//Get the previous polygon
+					Polygon tempP = polygons.get(polygons.size()-1);
+					int[] pX = new int[tempP.npoints];
+					int[] pY = new int[tempP.npoints];
+					for (int i = 0;i< tempP.npoints;++i){
+						pX[i] = tempP.xpoints[i];
+						pY[i] = tempP.ypoints[i];
 					}
-					for (int i = 0;i< fromSeedToCursor.length;++i){
-						pX[polygon.npoints+i] = fromSeedToCursor[i][0];
-						pY[polygon.npoints+i] = fromSeedToCursor[i][1];
-					}
-					polygon = new Polygon(pX, pY, pX.length);
-				}
-				//Get, and set the ROI
-				roi = new PolygonRoi(polygon,Roi.POLYLINE);
-				imp.setRoi(roi,true);
-				
+					polygon = new Polygon(pX,pY,pX.length);
+					polygons.remove(polygons.size()-1);	//Remove the previous polygon
+					roi = new PolygonRoi(polygon,Roi.POLYLINE);
+					imp.setRoi(roi,true);
+					lwc.setSeed(pX[pX.length-1],pY[pX.length-1]);
 			}else{
-				polygon.addPoint(x,y);
+				//Draw the latest Polygon
+				if (polygon.npoints > 0){
+					//Store a copy of the previous polygon
+					int[] tX = new int[polygon.npoints];
+					int[] tY = new int[polygon.npoints];
+					for (int i = 0;i< polygon.npoints;++i){
+						tX[i] = polygon.xpoints[i];
+						tY[i] = polygon.ypoints[i];
+					}
+					polygons.add(new Polygon(tX,tY,tX.length));	//Store the previous polygon
+					//Update the polygon
+					if ((e.getModifiersEx() & InputEvent.SHIFT_MASK) != 0||  (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0){
+						//Get a straight line
+						polygon.addPoint(x,y);
+					}else{
+						//Get polygon from livewire
+						int[][] fromSeedToCursor = lwc.returnPath(x,y);
+						int[] pX = new int[polygon.npoints+fromSeedToCursor.length];
+						int[] pY = new int[polygon.npoints+fromSeedToCursor.length];
+						for (int i = 0;i< polygon.npoints;++i){
+							pX[i] = polygon.xpoints[i];
+							pY[i] = polygon.ypoints[i];
+						}
+						for (int i = 0;i< fromSeedToCursor.length;++i){
+							pX[polygon.npoints+i] = fromSeedToCursor[i][0];
+							pY[polygon.npoints+i] = fromSeedToCursor[i][1];
+						}
+						polygon = new Polygon(pX, pY, pX.length);
+					}
+					//Get, and set the ROI
+					roi = new PolygonRoi(polygon,Roi.POLYLINE);
+					imp.setRoi(roi,true);
+				
+				}else{
+					polygon.addPoint(x,y);
+					lwc.setSeed(x,y);
+				}
 				lwc.setSeed(x,y);
-			}
-			lwc.setSeed(x,y);
 			
+			}
 		}
 	}
 	
