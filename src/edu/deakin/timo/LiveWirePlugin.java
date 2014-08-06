@@ -251,10 +251,9 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 			//IJ.log("Start removing listeners");
 			((ImageCanvas) e.getSource()).removeMouseListener(this);
 			((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
-			((ImageCanvas) e.getS\ource()).removeKeyListener(this);
+			((ImageCanvas) e.getSource()).removeKeyListener(this);
 			//IJ.log("All done");
 		}
-	
 	}
 	/**Invoked when a key has been released.*/
 	public void 	keyReleased(KeyEvent e){
