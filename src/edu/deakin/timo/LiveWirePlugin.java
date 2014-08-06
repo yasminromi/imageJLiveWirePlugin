@@ -66,7 +66,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	/*Implement the MouseListener, and MouseMotionListener interfaces*/
 	public void mousePressed(MouseEvent e) {
 		/*If alt is pressed when a button is clicked, disconnect listeners, i.e. stop the plugin*/
-		if (e.getClickCount() > 1 || e.getButton() == MouseEvent.BUTTON2 ||  (e.getModifiers() & InputEvent.ALT_MASK) != 0){
+		if (e.getClickCount() > 1 || e.getButton() == MouseEvent.BUTTON2 ||  (e.getModifiersEx() & InputEvent.ALT_MASK) != 0||  (e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0){
 			if (false){
 				//Remove the last point added with the first click of the double click
 				int[] pX = new int[polygon.npoints];
@@ -109,27 +109,31 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		//IJ.log("Mouse released: "+x+","+y+" polygon length "+polygon.npoints);
 		/*Draw the latest Polygon*/
 		if (polygon.npoints > 0){
-			/**Get polygon from livewire*/
-			int[][] fromSeedToCursor = lwc.returnPath(x,y);
-			//IJ.log("Return path length "+fromSeedToCursor.length);
-			int[] pX = new int[polygon.npoints+fromSeedToCursor.length];
-			int[] pY = new int[polygon.npoints+fromSeedToCursor.length];
-			for (int i = 0;i< polygon.npoints;++i){
-				pX[i] = polygon.xpoints[i];
-				pY[i] = polygon.ypoints[i];
+			if ((e.getModifiersEx() & InputEvent.SHIFT_MASK) != 0||  (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0){
+				//Get a straight line
+				polygon.addPoint(x,y);
+			}else{
+				//Get polygon from livewire
+				int[][] fromSeedToCursor = lwc.returnPath(x,y);
+				int[] pX = new int[polygon.npoints+fromSeedToCursor.length];
+				int[] pY = new int[polygon.npoints+fromSeedToCursor.length];
+				for (int i = 0;i< polygon.npoints;++i){
+					pX[i] = polygon.xpoints[i];
+					pY[i] = polygon.ypoints[i];
+				}
+				for (int i = 0;i< fromSeedToCursor.length;++i){
+					pX[polygon.npoints+i] = fromSeedToCursor[i][0];
+					pY[polygon.npoints+i] = fromSeedToCursor[i][1];
+				}
+				polygon = new Polygon(pX, pY, pX.length);
 			}
-			for (int i = 0;i< fromSeedToCursor.length;++i){
-				pX[polygon.npoints+i] = fromSeedToCursor[i][0];
-				pY[polygon.npoints+i] = fromSeedToCursor[i][1];
-			}
-			polygon = new Polygon(pX, pY, pX.length);
+			/**Get, and set the ROI*/
 			roi = new PolygonRoi(polygon,Roi.POLYLINE);
 			imp.setRoi(roi,true);
-			lwc.setSeed(x,y);
 		}else{
 			polygon.addPoint(x,y);
-			lwc.setSeed(x,y);
 		}
+		lwc.setSeed(x,y);
 	}
 	
 	public void mouseDragged(MouseEvent e) {
@@ -145,21 +149,33 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 			int screeY = e.getY();
 			int x = canvas.offScreenX(screenX);
 			int y = canvas.offScreenY(screeY);
-			
-			/*Use livewire*/
-			int[][] fromSeedToCursor = lwc.returnPath(x,y);
-			//IJ.log("Return path length "+fromSeedToCursor.length);
-			int[] pX = new int[polygon.npoints+fromSeedToCursor.length];
-			int[] pY = new int[polygon.npoints+fromSeedToCursor.length];
-			for (int i = 0;i< polygon.npoints;++i){
-				pX[i] = polygon.xpoints[i];
-				pY[i] = polygon.ypoints[i];
+			int[] pX;
+			int[] pY;
+			if ((e.getModifiersEx() & InputEvent.SHIFT_MASK) != 0||  (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0){
+				pX = new int[polygon.npoints+1];
+				pY = new int[polygon.npoints+1];
+				for (int i = 0;i< polygon.npoints;++i){
+					pX[i] = polygon.xpoints[i];
+					pY[i] = polygon.ypoints[i];
+				}
+				pX[polygon.npoints] = x;
+				pY[polygon.npoints] = y;				
+			} else {
+				//Use livewire
+				int[][] fromSeedToCursor = lwc.returnPath(x,y);
+				//IJ.log("Return path length "+fromSeedToCursor.length);
+				pX = new int[polygon.npoints+fromSeedToCursor.length];
+				pY = new int[polygon.npoints+fromSeedToCursor.length];
+				for (int i = 0;i< polygon.npoints;++i){
+					pX[i] = polygon.xpoints[i];
+					pY[i] = polygon.ypoints[i];
+				}
+				for (int i = 0;i< fromSeedToCursor.length;++i){
+					pX[polygon.npoints+i] = fromSeedToCursor[i][0];
+					pY[polygon.npoints+i] = fromSeedToCursor[i][1];
+				}
 			}
-			for (int i = 0;i< fromSeedToCursor.length;++i){
-				pX[polygon.npoints+i] = fromSeedToCursor[i][0];
-				pY[polygon.npoints+i] = fromSeedToCursor[i][1];
-			}
-			imp.setRoi(new PolygonRoi(pX, pY, pX.length, Roi.POLYLINE),true);
+			imp.setRoi(new PolygonRoi(pX, pY, pX.length, Roi.POLYLINE),true);			
 		}
 	}
 	
