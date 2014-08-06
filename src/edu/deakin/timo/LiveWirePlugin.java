@@ -9,6 +9,7 @@ package	edu.deakin.timo;
 import ij.*;
 import ij.gui.*;
 import ij.plugin.*;
+import ij.plugin.frame.RoiManager;
 import ij.measure.*;	/*For obtaining pixel dimensions from original stack...*/
 import ij.gui.*;			/*For creating the output stack images*/
 import ij.process.*;		/*For setting output stack image properties*/
@@ -24,12 +25,14 @@ import edu.deakin.timo.liveWireEngine.*;	/**Live wire implementation*/
 	Interactive live-wire boundary extraction. Medical Image Analysis (1996/7) volume 1, number 4, pp 331-341.
  */
 
-public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListener {
+public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListener, KeyListener {
 	ImageCanvas canvas;
 	ImagePlus imp;
 	PolygonRoi roi;
 	Polygon polygon;
 	ArrayList<Polygon> polygons;
+	RoiManager rMan;
+	Overlay over;
 	int width;
 	int height;
 	LiveWireCosts lwc;
@@ -45,13 +48,32 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		/*Get image size and stack depth*/
 		width = imp.getWidth();
 		height = imp.getHeight();
-		
+
+		init();		
+		/**Pop up Roi Manager*/
+		rMan = new RoiManager();
+
 		/*Register listener*/
 		ImageWindow win = imp.getWindow();
 		canvas = win.getCanvas();
 		canvas.addMouseListener(this);
 		canvas.addMouseMotionListener(this);
-		polygon = new Polygon();
+		canvas.addKeyListener(this);
+
+		
+		
+		
+		
+		
+		
+
+    }
+	
+	
+	protected void init(){
+		/*Init polygon stack for history*/
+		polygons = new ArrayList<Polygon>();
+		/*Init livewire*/
 		double[][] pixels = new double[width][height];
 		short[] tempPointer = (short[]) imp.getProcessor().getPixels();	
 		for (int r = 0;r<height;++r){
@@ -59,43 +81,50 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 				pixels[c][r] = (double) tempPointer[c+r*width];
 			}
 		}
-		
-		/*Init polygon stack for history*/
-		polygons = new ArrayList<Polygon>();
-		
-		/*Init livewire*/
 		lwc = new LiveWireCosts(pixels);
-    }
+		polygon = new Polygon();
+		
+		/**Add overlay*/
+		if (imp.getOverlay() == null){
+			over = new Overlay();
+			imp.setOverlay(over);
+		}else{
+			over = imp.getOverlay();
+		}
+		
+	}
 	
 	/*Implement the MouseListener, and MouseMotionListener interfaces*/
 	public void mousePressed(MouseEvent e) {
 		/*If alt is pressed when a button is clicked, disconnect listeners, i.e. stop the plugin*/
 		if (e.getClickCount() > 1){
-			if (false){
-				//Remove the last point added with the first click of the double click
-				int[] pX = new int[polygon.npoints];
-				int[] pY = new int[polygon.npoints];
-				for (int i = 0;i< polygon.npoints-1;++i){
-					pX[i] = polygon.xpoints[i];
-					pY[i] = polygon.ypoints[i];
-				}
-				//Connect the first, and the last digitized point
-				pX[polygon.npoints-1] = polygon.xpoints[0];
-				pY[polygon.npoints-1] = polygon.ypoints[0];
-				//re-create the polygon
-				polygon = new Polygon(pX, pY, pX.length);
-			}else{
-				//Do not remove the last point, simply connect last point, and initial point
-				polygon.addPoint(polygon.xpoints[0],polygon.ypoints[0]);
-			}
+			//Do not remove the last point, simply connect last point, and initial point
+			//IJ.log("Add point "+polygon.npoints);
+			polygon.addPoint(polygon.xpoints[0],polygon.ypoints[0]);
 			
 			//IJ.log("Appended, length after "+polygon.npoints);
 			roi = new PolygonRoi(polygon,Roi.POLYGON);
+			
+			
+			/*Add the roi to an overlay, and set the overlay active*/
+			//IJ.log("Add ROI");
 			imp.setRoi(roi,true);
+			//IJ.log("Add overlay");
+			over.add(roi);
+			//imp.setOverlay(over);
+			
+			/**Add the segmented area to the roiManager*/
+			//IJ.log("Add rMan");
+			rMan.addRoi(roi);
+			
+			/**Reset polygons*/
+			//IJ.log("REset");
+			init();
+			//IJ.log("All done");
 			/**Remove listeners*/
 			//IJ.log("Start removing listeners");
-			((ImageCanvas) e.getSource()).removeMouseListener(this);
-			((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
+			//((ImageCanvas) e.getSource()).removeMouseListener(this);
+			//((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
 			//IJ.log("All done");
 		}
 		
@@ -209,4 +238,27 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		}
 	}
 	
+	/**Implement KeyListener*/
+	/**Invoked when a key has been pressed.*/
+	public void 	keyPressed(KeyEvent e){
+		/**Shut down the plug-in*/
+		if (e.getExtendedKeyCode() == KeyEvent.getExtendedKeyCodeForChar(KeyEvent.VK_Q) || e.getKeyChar() == 'q'){
+			/**Remove listeners*/
+			//IJ.log("Start removing listeners");
+			((ImageCanvas) e.getSource()).removeMouseListener(this);
+			((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
+			((ImageCanvas) e.getS\ource()).removeKeyListener(this);
+			//IJ.log("All done");
+		}
+	
+	}
+	/**Invoked when a key has been released.*/
+	public void 	keyReleased(KeyEvent e){
+	
+	}
+	/**Invoked when a key has been typed.*/
+	public void 	keyTyped(KeyEvent e){
+	
+	}
+
 }
