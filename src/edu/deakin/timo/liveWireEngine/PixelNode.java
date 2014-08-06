@@ -12,30 +12,36 @@ class PixelNode implements Comparable<PixelNode> {
     private int[] myIndex;
     private double myDistance;
     private int[] whereFrom;
+    /**Constructor
+    	@param index the index of the node
+    	@param distance the cost to the node
+    	@param whereFrom from which node we got to this node from
+    */
     public PixelNode(int[] index, double distance, int[] whereFrom){
-	myIndex = index;
-	myDistance = distance;
-	this.whereFrom = whereFrom;
+		myIndex = index;
+		myDistance = distance;
+		this.whereFrom = whereFrom;
     }
     public double getDistance(){
-	return myDistance;
+		return myDistance;
     }
     public int[] getIndex(){
-	return myIndex;
+		return myIndex;
     }
     public int[] getWhereFrom(){
-	return whereFrom;
+		return whereFrom;
     }
 
     public int compareTo(PixelNode other){
-	if( myDistance < other.getDistance()){
-	    return -1;
-	}else{
-		if( myDistance > other.getDistance()){
-		    return +1;
+		if( myDistance < other.getDistance()){
+			return -1;
 		}else{
-		    return 0;
-	    }
-    }
+			if( myDistance > other.getDistance()){
+				return +1;
+			}else{
+				return 0;
+			}
+		}
+	}
 
 }
