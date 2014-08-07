@@ -1,23 +1,38 @@
 <html>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/> 
 	<body>
 		<H2>ImageJ LiveWire plug-in for computer-assisted muscle compartment segmentation</H2>
 		<p>
-			An implementation of <a href="http://www.medicalimageanalysisjournal.com/article/S1361-8415%2897%2985005-0/abstract">Barrett & Mortensen 1997 live-wire boundary extraction paper</a>. Load a pre-compiled plug-in from <B><a href="plugin/ListenerPlugin_.jar">here</a></B>. The source code (including an ant build file) is available at <a href="https://github.com/tjrantal/imageJLiveWirePlugin">github</a>.
+			An implementation of <a href="http://www.medicalimageanalysisjournal.com/article/S1361-8415%2897%2985005-0/abstract">Barrett & Mortensen 1997 live-wire boundary extraction paper</a>. Load a pre-compiled plug-in from <B><a href="plugin/ListenerPlugin_.jar">here</a></B><sup><a href="#fn1" id="ref1">1</a></sup>. The source code (including an ant build file) is available at <a href="https://github.com/tjrantal/imageJLiveWirePlugin">github</a>.
 		</p>
 		
 		<H2>Use</H2>
 		<p>
 			<ul>
-				<li>Open an image (if stack, browse to the image you want to segment)</li>
-				<li>Fire up the plug-in: Plugins -> LiveWire. It is a good idea to tie the plug-in to a keyboard shortcut (Plugins->Shortcuts->Create Shortcut... and look for LiveWire from the alphabetically ordered list)</li>
-				<li>Zoom in to make segmentation easier, and left click on a point to init segmentation</li>
-				<li>Moving the cursor around shows the segmentation in real-time. Left click to a point to freeze the segmentation up to that point</li>
-				<li>Press and hold the 'shift' key, and left click to add a straight line segment</li>
-				<li>Press and hold the 'ctrl' key, to remove the latest segment added (it is possible to reverse all the way to the first point)</li>
-				<li>Double left click finishes the segmentation. The first click of the double click is added as a point to the segmentation, and a straight line segment is added from that point to the first point (used to init the segmentation) to close the region of interest.<br><br>The roi is added to the RoiManager at this point</li>
-				<li>You can segment multiple ROIs in a given image. Once you've finished with the final ROI of a given image press 'q' key to shutdown the plug-in. If you want to segment another image from the same stack, browse to that image, and restart teh plug-in. N.B. Switching images without shutting down the plug-in will lead into erroneous results!</li>
+				<li>Open an image (if stack, browse to the image you want to segment). The plug-in only works on one image at a time, i.e. you need to re-load the plug-in, if you change the image.</li>
+				<li>Fire up the plug-in: Plugins -> LiveWire.<sup><a href="#fn2" id="ref2">2</a></sup></li>
+				<li>Zoom in ('+' key) to make segmentation easier, and left click on a point to init segmentation.</li>
+				<li>Moving the cursor around shows the segmentation in real-time. Left click to a point to freeze the segmentation up to that point.</li>
+				<li>Press and hold the 'shift' key, and left click to add a straight line segment.</li>
+				<li>Press and hold the 'ctrl' key, to remove the latest segment added (it is possible to reverse all the way to the first point).</li>
+				<li>Double left click finishes the segmentation. The first click of the double click is added as a point to the segmentation, and a straight line segment is added from that point to the first point (used to init the segmentation) to close the region of interest. The roi is added to the RoiManager at this point.</li>
+				<li>You can segment multiple ROIs in a given image. Once you've finished with the final ROI of a given image press 'q' key to shut down the plug-in. If you want to segment another image from the same stack, browse to that image, and restart the plug-in. N.B. Switching images without shutting down the plug-in will lead into erroneous results!</li>
 
 			</ul>
 		</p>
+		<p>
+			<img src="img/sample.png" alt="sample image"/><br>
+			Sample segmentation of two regions of interest from the same image.			
+		</p>
+		<hr></hr>
+		<sup id="fn1">
+			1. Fire up an instance of ImageJ, and drag and drop the link on the running ImageJ instance is the easiest way to install the plugin (save into jars directory). Alternatively copy the ListenerPlugin_.jar manually to ./ImageJ/plugins/jars, and (re)start ImageJ
+			<a href="#ref1" title="Jump back to footnote 1 in the text.">↩</a>
+		 </sup><br>
+		 <sup id="fn2">		 
+			2. It is a good idea to tie the plug-in to a keyboard shortcut (Plugins->Shortcuts->Create Shortcut... and look for LiveWire from the alphabetically ordered list).
+			<a href="#ref2" title="Jump back to footnote 2 in the text.">↩</a>
+		</sup><br>
+		
 	</body>
 </html>
