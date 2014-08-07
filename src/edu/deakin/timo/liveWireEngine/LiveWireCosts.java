@@ -214,7 +214,14 @@ public class LiveWireCosts implements Runnable{
 		return tempLap;
 	}
 
-	/*Calculates edge direction cost*/
+	/*Calculates edge direction cost
+		@param sr source pixel x-coordinate
+		@param sc source pixel y-coordinate
+		@param dr destination pixel x-coordinate
+		@param dc destination pixel y-coordinate
+		@return edgeDirectionCostValue edge direction cost
+		
+	*/
 	private double edgeDirectionCost(int sr,int sc,int dr,int dc){
 		Vector2d Dp = (new Vector2d(gradientrows[sr][sc],-gradientcolumns[sr][sc])).getUnit();
 		Vector2d Dq = (new Vector2d(gradientrows[dr][dc],-gradientcolumns[dr][dc])).getUnit();
@@ -241,8 +248,11 @@ public class LiveWireCosts implements Runnable{
 		return edgeCostSum;
 	}
 
-    //updates Costs and Paths for a given point
-    //calculated over 8 directions N, NE, E, SE, S, SW, W, NW
+    /*updates Costs and Paths for a given point
+    	calculated over 8 directions N, NE, E, SE, S, SW, W, NW
+    	@param r target pixel x-coordinate
+    	@param c target pixel y-coordinate
+    */
     private void updateCosts(int r,int c,double mycost){
 		visited[r][c] = true;
 		pixelCosts.poll();
