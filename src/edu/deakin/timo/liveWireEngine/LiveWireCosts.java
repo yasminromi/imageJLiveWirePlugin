@@ -135,7 +135,7 @@ public class LiveWireCosts implements Runnable{
 		return maximum;
 	}
 
-    /*initializes laplacian image*/
+    /*initializes laplacian image zero-crossings. Marks zero-crossings with 0, otherwise the value is 1*/
     private void initLaplacian(){
 		laplacian = new double[rows][columns];
 		
@@ -161,6 +161,12 @@ public class LiveWireCosts implements Runnable{
 
 		/*Search for zero crossing to binarize the result*/
 		double[][] tempLap = new double[rows][columns];
+		for (int i = 0; i<tempLap.length;++i){
+			for (int j = 0; j<tempLap[i].length;++j){
+				tempLap[i][j] = 1d;
+			}
+		}		
+		/*Check pixel neighbourhoods for zero-crossings*/
 		int[][] neighbourhood = new int[8][2];	//8 connected neighbourhood
 		for(int i=1;i<rows-1;i++){
 			for(int j=1;j<columns-1;j++){
@@ -199,11 +205,10 @@ public class LiveWireCosts implements Runnable{
         for (int r = 0;r<neighbourhood.length;++r){
 			coordinates = neighbourhood[r];
             if (Math.signum(laplacian[coordinates[0]][coordinates[1]]) != Math.signum(laplacian[centre[0]][centre[1]])){ /*Signs differ, mark border*/
+				/*Mark the one, which is closer to zero*/
 				if (Math.abs(laplacian[centre[0]][centre[1]]) < Math.abs(laplacian[coordinates[0]][coordinates[1]])){
-					tempLap[centre[0]][centre[1]] = 1;	/*zero-crossing detected*/
-			    }else{
-					tempLap[coordinates[0]][coordinates[1]] = 0;
-				}
+					tempLap[centre[0]][centre[1]] = 0;	/*zero-crossing detected, change to 0 to disable laplacian*/
+			    }
             }
         }
 		return tempLap;
