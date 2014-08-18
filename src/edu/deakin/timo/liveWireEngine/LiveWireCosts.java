@@ -63,7 +63,7 @@ public class LiveWireCosts implements Runnable{
 		initGradient();
 		initLaplacian();
 		//inits the thread
-		myThread = new Thread(this);
+		//myThread = new Thread(this);
     }    
 	
     /* 
@@ -336,7 +336,6 @@ public class LiveWireCosts implements Runnable{
 			myThread.join();
 		} catch (InterruptedException e) {
 			System.out.println("Bogus Exception");
-			e.printStackTrace();			
 		}
     	
     	tr = r;	

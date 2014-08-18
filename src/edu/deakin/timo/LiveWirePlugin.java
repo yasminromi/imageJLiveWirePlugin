@@ -24,9 +24,12 @@ import edu.deakin.timo.liveWireEngine.*;	/**Live wire implementation*/
 	Interactive live-wire boundary extraction. Medical Image Analysis (1996/7) volume 1, number 4, pp 331-341.
  */
 
-public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListener, KeyListener {
+public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListener, KeyListener, AdjustmentListener, MouseWheelListener {
 	ImageCanvas canvas;
 	ImagePlus imp;
+	ImageWindow imw;
+	ScrollbarWithLabel stackScrollbar;
+	
 	PolygonRoi roi;
 	Polygon polygon;
 	ArrayList<Polygon> polygons;
@@ -34,21 +37,83 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	Overlay over;
 	int width;
 	int height;
+	int currentSlice;
 	LiveWireCosts lwc;
+	
+	/**Implement AdjustmentListener*/
+	public void adjustmentValueChanged(AdjustmentEvent e){
+		IJ.log("Slice after adjustment "+e.getValue());
+		if (currentSlice != e.getValue()){
+			/**Finalize ROI in the previous imp*/
+			finalizeRoi();
+			initLW();
+		}
+		
+	}
+	
+	/**Implement MouseWheelListener*/
+	public void mouseWheelMoved(MouseWheelEvent e){
+		IJ.log("Mouse wheel moved, after adjustment "+stackScrollbar.getValue());
+		if (currentSlice != stackScrollbar.getValue()){
+			/**Finalize ROI in the previous imp*/
+			finalizeRoi();
+			initLW();
+		}
+	}
 	
 	/**Implement the PlugIn interface*/
     public void run(String arg) {
-        imp = WindowManager.getCurrentImage();
+		imw = WindowManager.getCurrentWindow();
+		canvas = imw.getCanvas();
         /*Check that an image was open*/
-		if (imp == null) {
+		if (WindowManager.getCurrentImage() == null) {
             IJ.noImage();
             return;
         }
-		/*Get image size and stack depth*/
-		width = imp.getWidth();
-		height = imp.getHeight();
+		
+		if (WindowManager.getCurrentImage().getImageStackSize() > 1){
+			Component[] list = imw.getComponents();
+			for (int i = 0; i<list.length;++i){
+				System.out.println("Enumerating components "+list[i].toString());
+				if (list[i] instanceof ScrollbarWithLabel){
+					stackScrollbar = ((ScrollbarWithLabel) list[i]);
+					stackScrollbar.addAdjustmentListener(this);
+					imw.addMouseWheelListener(this);
+					break;
+				}
+			}
+		}
 
+		
+		/*Get image size and stack depth*/
+		width = WindowManager.getCurrentImage().getWidth();
+		height = WindowManager.getCurrentImage().getHeight();
+
+
+		initLW();
+				
+		/**Pop up Roi Manager*/
+		if (RoiManager.getInstance() == null){
+			rMan = new RoiManager();
+		}else{
+			rMan = RoiManager.getInstance();
+		}
+		/*Register listener*/
+		//ImageWindow win = imp.getWindow();
+		
+		canvas.addMouseListener(this);
+		canvas.addMouseMotionListener(this);
+		canvas.addKeyListener(this);
+
+    }
+	
+	/**Used to reset livewire when switching to another slice in a stack*/
+	protected void initLW(){
 		/*Init livewire*/
+		imp = WindowManager.getCurrentImage();
+		if (imp.getImageStackSize() > 1){
+			currentSlice = stackScrollbar.getValue();
+		}
 		double[][] pixels = new double[width][height];
 		short[] tempPointer = (short[]) imp.getProcessor().getPixels();	
 		for (int r = 0;r<height;++r){
@@ -57,22 +122,9 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 			}
 		}
 		lwc = new LiveWireCosts(pixels);
-
-		init();		
-		/**Pop up Roi Manager*/
-		if (RoiManager.getInstance() == null){
-			rMan = new RoiManager();
-		}else{
-			rMan = RoiManager.getInstance();
-		}
-		/*Register listener*/
-		ImageWindow win = imp.getWindow();
-		canvas = win.getCanvas();
-		canvas.addMouseListener(this);
-		canvas.addMouseMotionListener(this);
-		canvas.addKeyListener(this);
-
-    }
+		init();
+	}
+	
 	
 	/**Used to reset the polygon, and polygon list used to keep current polygon, and the history of the current polygon*/
 	protected void init(){
@@ -93,6 +145,14 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	/*Implement the MouseListener, and MouseMotionListener interfaces*/
 	public void mousePressed(MouseEvent e) {
 		if (e.getClickCount() > 1){
+			finalizeRoi();
+			/**Reset polygons*/
+			init();
+		}
+	}
+
+	public void finalizeRoi(){
+		if (polygon.npoints > 2){
 			//Do not remove the last point, simply connect last point, and initial point
 			polygon.addPoint(polygon.xpoints[0],polygon.ypoints[0]);
 			/*Create the ROI*/
@@ -111,11 +171,9 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 			over.add(roi);
 			/**Add the segmented area to the roiManager*/
 			rMan.addRoi(roi);
-			/**Reset polygons*/
-			init();
 		}
 	}
-
+	
 	public void mouseReleased(MouseEvent e) {
 		/**Ignore second and further clicks of a double click*/
 		if (e.getClickCount() < 2){
@@ -155,7 +213,8 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 						polygon.addPoint(x,y);
 					}else{
 						/*Add a livewire segment*/
-						int[][] fromSeedToCursor = lwc.returnPath(x,y);
+						int[][] fromSeedToCursor;
+						while ((fromSeedToCursor	= lwc.returnPath(x,y)) == null){}
 						int[] pX = new int[polygon.npoints+fromSeedToCursor.length];
 						int[] pY = new int[polygon.npoints+fromSeedToCursor.length];
 						for (int i = 0;i< polygon.npoints;++i){
@@ -208,7 +267,8 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 				pY[polygon.npoints] = y;				
 			} else {
 				/*Visualize adding livewire segment*/
-				int[][] fromSeedToCursor = lwc.returnPath(x,y);
+				int[][] fromSeedToCursor;
+				while ((fromSeedToCursor	= lwc.returnPath(x,y)) == null){}
 				pX = new int[polygon.npoints+fromSeedToCursor.length];
 				pY = new int[polygon.npoints+fromSeedToCursor.length];
 				for (int i = 0;i< polygon.npoints;++i){
@@ -231,9 +291,17 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 		/**Shut down the plug-in*/
 		if (e.getExtendedKeyCode() == KeyEvent.getExtendedKeyCodeForChar(KeyEvent.VK_Q) || e.getKeyChar() == 'q'){
 			/**Remove listeners*/
+			canvas.removeMouseListener(this);
+			canvas.removeMouseMotionListener(this);
+			canvas.removeKeyListener(this);
+			stackScrollbar.removeAdjustmentListener(this);
+			imw.removeMouseWheelListener(this);
+
+			/*
 			((ImageCanvas) e.getSource()).removeMouseListener(this);
 			((ImageCanvas) e.getSource()).removeMouseMotionListener(this);
 			((ImageCanvas) e.getSource()).removeKeyListener(this);
+			*/
 		}
 	}
 	/**Invoked when a key has been released.*/
