@@ -42,7 +42,6 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	
 	/**Implement AdjustmentListener*/
 	public void adjustmentValueChanged(AdjustmentEvent e){
-		IJ.log("Slice after adjustment "+e.getValue());
 		if (currentSlice != e.getValue()){
 			/**Finalize ROI in the previous imp*/
 			finalizeRoi();
@@ -53,7 +52,6 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	
 	/**Implement MouseWheelListener*/
 	public void mouseWheelMoved(MouseWheelEvent e){
-		IJ.log("Mouse wheel moved, after adjustment "+stackScrollbar.getValue());
 		if (currentSlice != stackScrollbar.getValue()){
 			/**Finalize ROI in the previous imp*/
 			finalizeRoi();
