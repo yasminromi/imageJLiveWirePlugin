@@ -38,13 +38,20 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	int width;
 	int height;
 	int currentSlice;
+	int depth = -1;
 	LiveWireCosts lwc;
 	
 	/**Implement AdjustmentListener*/
 	public void adjustmentValueChanged(AdjustmentEvent e){
 		if (currentSlice != e.getValue()){
+			int previousSlice = currentSlice;
+			currentSlice = e.getValue();
 			/**Finalize ROI in the previous imp*/
+			imp.setSlice(previousSlice);
+			imp.setPosition(previousSlice);
 			finalizeRoi();
+			imp.setSlice(currentSlice);
+			imp.setPosition(currentSlice);
 			initLW();
 		}
 		
@@ -52,9 +59,16 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	
 	/**Implement MouseWheelListener*/
 	public void mouseWheelMoved(MouseWheelEvent e){
-		if (currentSlice != stackScrollbar.getValue()){
+		int rotation = e.getWheelRotation();
+		if (currentSlice+rotation >0 && currentSlice+rotation <=depth && currentSlice != currentSlice+rotation){
+			int previousSlice = currentSlice;
+			currentSlice+= rotation;
 			/**Finalize ROI in the previous imp*/
+			imp.setSlice(previousSlice);
+			imp.setPosition(previousSlice);
 			finalizeRoi();
+			imp.setSlice(currentSlice);
+			imp.setPosition(currentSlice);
 			initLW();
 		}
 	}
@@ -63,6 +77,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
     public void run(String arg) {
 		imw = WindowManager.getCurrentWindow();
 		canvas = imw.getCanvas();
+		imp = WindowManager.getCurrentImage();
         /*Check that an image was open*/
 		if (WindowManager.getCurrentImage() == null) {
             IJ.noImage();
@@ -70,6 +85,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
         }
 		
 		if (WindowManager.getCurrentImage().getImageStackSize() > 1){
+			depth = WindowManager.getCurrentImage().getImageStackSize();
 			Component[] list = imw.getComponents();
 			for (int i = 0; i<list.length;++i){
 				System.out.println("Enumerating components "+list[i].toString());
@@ -77,6 +93,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 					stackScrollbar = ((ScrollbarWithLabel) list[i]);
 					stackScrollbar.addAdjustmentListener(this);
 					imw.addMouseWheelListener(this);
+					currentSlice = stackScrollbar.getValue();
 					break;
 				}
 			}
@@ -108,10 +125,6 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	/**Used to reset livewire when switching to another slice in a stack*/
 	protected void initLW(){
 		/*Init livewire*/
-		imp = WindowManager.getCurrentImage();
-		if (imp.getImageStackSize() > 1){
-			currentSlice = stackScrollbar.getValue();
-		}
 		double[][] pixels = new double[width][height];
 		short[] tempPointer = (short[]) imp.getProcessor().getPixels();	
 		for (int r = 0;r<height;++r){
