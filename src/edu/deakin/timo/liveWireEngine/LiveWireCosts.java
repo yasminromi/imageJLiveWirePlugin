@@ -30,7 +30,7 @@ public class LiveWireCosts implements Runnable{
 
     private int tr,tc;//thread x and y passed as parameters
 
-    Thread myThread;
+    Thread myThread=null;
     boolean myThreadRuns;//flag for thread state
     
     private double gw;//Gradient Magnitude Weight
@@ -330,12 +330,14 @@ public class LiveWireCosts implements Runnable{
 		@param c y-coordinate of the seed
 	*/
     public void setSeed(int r, int c){
-	    	
-    	myThreadRuns=false;    	    	
-    	try {
-			myThread.join();
-		} catch (InterruptedException e) {
-			System.out.println("Bogus Exception");
+	    System.out.println("Setting Seed r "+r+" c "+c);	
+    	myThreadRuns=false;
+    	if (myThread != null){    	    	
+			try {
+				myThread.join();
+			} catch (InterruptedException e) {
+				System.out.println("Bogus Exception");
+			}
 		}
     	
     	tr = r;	
