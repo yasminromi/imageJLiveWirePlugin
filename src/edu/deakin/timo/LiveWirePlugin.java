@@ -14,6 +14,7 @@ import ij.gui.*;			/*For creating the output stack images*/
 import ij.process.*;		/*For setting output stack image properties*/
 import ij.io.*;			/*For setting image voxel dimensions...*/
 import java.util.*;				/*For enumeration*/
+
 import java.awt.*;
 import java.awt.event.*;		/**MouseListener*/
 import edu.deakin.timo.liveWireEngine.*;	/**Live wire implementation*/
@@ -126,7 +127,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	protected void initLW(){
 		/*Init livewire*/
 		double[][] pixels = new double[width][height];
-		short[] tempPointer = (short[]) imp.getProcessor().getPixels();	
+		int[] tempPointer = (int[]) imp.getProcessor().getPixels();	
 		for (int r = 0;r<height;++r){
 			for (int c = 0;c<width;++c){
 				pixels[c][r] = (double) tempPointer[c+r*width];
@@ -322,6 +323,24 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	/**Invoked when a key has been typed.*/
 	public void 	keyTyped(KeyEvent e){
 	
+	}
+	
+	/**
+	 * Main method for debugging.
+	 *
+	 * For debugging, it is convenient to have a method that starts ImageJ, loads
+	 * an image and calls the plugin, e.g. after setting breakpoints.
+	 *
+	 * @param args unused
+	 */
+	public static void main(String[] args) throws Exception {
+			Class<?> clazz = LiveWirePlugin.class;
+			new ImageJ();
+			
+			ImagePlus image = IJ.openImage("http://imagej.net/images/clown.jpg");
+			image.show();
+			IJ.runPlugIn(clazz.getName(), "");
+		
 	}
 
 }
